@@ -1,5 +1,5 @@
 # rov_bus
-A ROS package containing files required to visualise an underwater vehicle in RViz and Gazebo. This package is a dependency for [rov_bus_control][1]. 
+A ROS package containing files required to visualise an underwater vehicle in RViz and Gazebo. This package is a dependency for [rov_bus_control](https://github.com/meetm473/rov_bus_control). 
 
 ### About the ROV and pool design
 The ROV has been named **Bus** because it looks like one. ROV Bus is equipped with 4 thrusters and a head camera. It exhibits 3 degrees of freedom (3-DoF).
