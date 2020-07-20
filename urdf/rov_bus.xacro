@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot name="rov_bus" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <!-- Dummy thruster links to define position of the thrusters -->
+  <!-- Input parameters: Thruster ID and pose of the joint -->
+  <xacro:macro name="thruster_link" params="id xyz">        
+        
+        <link name="thruster_${id}">
+			<buoyancy>
+				<compensation>1.0</compensation>
+			</buoyancy>                
+        </link>
+        
+        <joint name="thruster_${id}_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="thruster_${id}"/>
+            <origin rpy="0 0 0" xyz="${xyz}"/>
+        </joint>
+                                    
+   </xacro:macro>   
+     
+  <!-- Gazebo plugin for buoyancy -->   
+  <gazebo>
+	<plugin name="freefloating_gazebo_control" filename="libfreefloating_gazebo_control.so">
+		<switchService>switch</switchService>
+		<updateRate>100</updateRate>
+		<link>base_link</link>
+		
+		 <!-- for each thruster, give the map to XYZ+RPY and the maximum effort -->
+        <thruster>
+            <effort>40</effort>
+            <name>thruster_1</name>
+            <map>-1 0 0 0 0 1</map>
+        </thruster>
+		<thruster>
+            <effort>40</effort>
+            <name>thruster_2</name>
+            <map>-1 0 0 0 0 -1</map>
+        </thruster>
+        <thruster>
+            <effort>40</effort>
+            <name>thruster_3</name>
+            <map>0 0 -1 0 0 0</map>
+        </thruster>
+		<thruster>
+            <effort>40</effort>
+            <name>thruster_4</name>
+            <map>>0 0 -1 0 0 0</map>
+        </thruster>		
+	</plugin>
+  </gazebo>   
+  	
+  <link name="base_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="6" />
+      <inertia
+        ixx="0.0136592345950678"
+        ixy="-4.65512616595934E-07"
+        ixz="-8.46843745917573E-14"
+        iyy="0.0348658629476982"
+        iyz="1.91528147483672E-07"
+        izz="0.0229721582513523" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rov_bus/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rov_bus/meshes/base_link_collision.STL" />
+      </geometry>
+    </collision>
+    <buoyancy>
+      <compensation>1.01</compensation>
+      <origin xyz="0 0 0"/>
+      <limit radius="0.01"/>
+      <damping xyz="20 20 20" rpy="10 10 10" type="linear"/>
+	</buoyancy>
+  </link>
+  
+  <gazebo reference="base_link">
+	<material>Gazebo/Green</material>
+  </gazebo>
+  
+  <link name="camera_hardware">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rov_bus/meshes/camera_hardware.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rov_bus/meshes/camera_hardware.STL" />
+      </geometry>
+    </collision>
+    <buoyancy>
+		<compensation>1.0</compensation>
+	</buoyancy> 
+  </link>
+  
+  <joint
+    name="camera_hardware_joint"
+    type="fixed">
+    <origin
+      xyz="-0.155 0 -0.03"
+      rpy="1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="camera_hardware" />
+  </joint>
+  
+  <gazebo reference="camera_hardware">
+	<material>Gazebo/Red</material>
+  </gazebo>
+  
+  <!-- ROV actuators -->
+  <xacro:thruster_link id="1" xyz="0 -0.133 0"/> 						<!-- Left thruster -->
+  <xacro:thruster_link id="2" xyz="0 0.133 0"/>  						<!-- Right thruster -->
+  <xacro:thruster_link id="3" xyz="-0.09 0 0"/>  						<!-- Top front thruster -->
+  <xacro:thruster_link id="4" xyz="0.09 0 0"/> 						    <!-- Top Back thruster -->
+	
+
+  <!-- ROV sensors -->
+  <xacro:property name="camera_dimensions" value="0.001 0.001 0.001"/>
+  
+  <!-- Camera: gazebo sensor-->
+  <link name="camera_head_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+		<box size="${camera_dimensions}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+    <box size="${camera_dimensions}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link> 
+  
+  <joint name="camera_head_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="-1.5708 3.14 0"/>
+    <parent link="camera_hardware"/>
+    <child link="camera_head_link"/>
+  </joint>
+  
+  <!-- Camera: Plugin -->
+  <gazebo reference="camera_head_link">
+	<material>Gazebo/Black</material>  
+    <sensor type="camera" name="camera_front">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>camera_front</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+ 
+	
+</robot>
